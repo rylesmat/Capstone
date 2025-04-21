@@ -29,3 +29,6 @@ To enhance the artifact, I implemented a graph for room navigation. I represente
 
 ## Enhancement Three: Databases
 To enhance the artifact, I integrated a database to store game history with MySQL. The player enters their name and starts the game, after they are finished, their win or loss is recorded allowing them to track progress over multiple sessions.
+
+
+## NOTE: All enhancements are made in same project: myproject
