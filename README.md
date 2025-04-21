@@ -17,7 +17,7 @@ Security also played a significant role in my education. In the Software Securit
 My ePortfolio focuses on enhancements made to a text-based game I created in a previous course. This artifact was chosen because it was a project I completed at the beginning of my computer science education, so it provided a good opportunity to showcase my growth and improvement. It specifically will demonstrate my knowledge of software design and engineering, algorithms and data structures, and databases.
 
 
-## Original Artifact
+## Original Artifact - projectPractice.py
 The artifact I have made enhancements to is a harry potter text-based adventure game. Players are able to navigate between different rooms in Hogwarts to collect items (Horcruxes) to defeat Voldemort. This artifact was created as a project in IT140. 
 
 ## Enhancement One: Software Design and Engineering
