@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harry Potter Adventure Game</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .game-container {
+            max-width: 700px;
+            margin: auto;
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(255, 255, 255, 0.1);
+        }
+        .instructions {
+            text-align: left;
+            background-color: #333;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .btn-group {
+            margin: 10px;
+        }
+        #game-status {
+            margin-top: 15px;
+        }
+        /* Map Styling */
+        .map-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .map-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            width: 400px;
+            margin: auto;
+        }
+        .room {
+            padding: 15px;
+            border: 2px solid white;
+            text-align: center;
+            font-size: 14px;
+            background-color: #444;
+            border-radius: 5px;
+        }
+        .player-location {
+            background-color: gold !important;
+            font-weight: bold;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h1>🧙 Harry Potter Adventure Game</h1>
+
+        <!-- Instructions Section -->
+        <div class="instructions">
+            <h4>📜 Instructions</h4>
+            <p>Voldemort and the Death Eaters have invaded Hogwarts! You must collect all Horcruxes and destroy them with the Basilisk Fang to defeat him.</p>
+            <ul>
+                <li><b>Move Commands:</b> Click North, South, East, or West.</li>
+                <li><b>Pick Up Items:</b> Click "Pick Up Item" when available.</li>
+                <li><b>Winning:</b> Collect all Horcruxes and use "Destroy All".</li>
+                <li><b>Losing:</b> Enter the Great Hall without all items.</li>
+            </ul>
+        </div>
+        <input type="text" id="playerName" placeholder="Enter your name">
+
+        <button onclick="checkStats()">View Stats</button>
+
+        <p id="game-status">Press "Start Game" to begin!</p>
+
+        <button class="btn btn-success" onclick="startGame()">Start Game</button>
+
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="move('North')">⬆ Move North</button>
+        </div>
+        <br>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="move('West')">⬅ Move West</button>
+            <button class="btn btn-primary" onclick="move('East')">➡ Move East</button>
+        </div>
+        <br>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="move('South')">⬇ Move South</button>
+        </div>
+        <br>
+        <button class="btn btn-warning" onclick="pickupItem()">👜 Pick Up Item</button>
+        <button class="btn btn-danger" onclick="destroyAll()">⚔ Destroy All</button>
+
+        <h3>📜 Inventory:</h3>
+        <ul id="inventory-list"></ul>
+
+        <!-- Map Display -->
+        <div class="map-container">
+            <h3>🗺 Hogwarts Map</h3>
+            <div class="map-grid" id="map-grid">
+                <!-- Rooms will be dynamically updated here -->
+            </div>
+        </div>
+
+        <button onclick="getHint()">Hint (Find Best Path)</button>
+
+    </div>
+
+    <script>
+        let gameRooms = [
+            ["Dormitory", "Gryffindor Common Room", "Headmaster's Office"],
+            ["Corridor", "Room of Requirement", "Potions Classroom"],
+            ["Store Room", "Chamber of Secrets", "Great Hall"]
+        ];
+
+        let playerLocation = "Gryffindor Common Room";
+
+
+        function startGame() {
+        let playerName = document.getElementById("playerName").value;
+        fetch('/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ "player_name": playerName })
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+        });
+        }
+
+        function checkStats() {
+            let playerName = document.getElementById("playerName").value;
+            fetch('/stats', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ "player_name": playerName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(`Player: ${data.player_name}\nWins: ${data.wins}\nLosses: ${data.losses}`);
+            });
+        }
+
+
+        async function move(direction) {
+            let response = await fetch("/move", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ direction: direction })
+            });
+            let data = await response.json();
+            playerLocation = data.current_room;
+            updateGameStatus(data);
+            updateMap();
+        }
+
+        async function pickupItem() {
+            let response = await fetch("/pickup", { method: "POST" });
+            let data = await response.json();
+            updateGameStatus(data);
+        }
+
+        async function destroyAll() {
+            let playerName = document.getElementById("playerName").value; // Get the player name
+            let response = await fetch("/destroy_all", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ player_name: playerName }) // Send player_name
+            });
+            let data = await response.json();
+            updateGameStatus(data);
+        }
+
+        function getHint() {
+        fetch('/hint', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);  // Show the hint in an alert box
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function updateGameStatus(data) {
+            let statusElement = document.getElementById("game-status");
+            let inventoryElement = document.getElementById("inventory-list");
+
+            statusElement.innerText = data.message || "Something went wrong...";
+
+            if (data.inventory) {
+                inventoryElement.innerHTML = "";
+                data.inventory.forEach(item => {
+                    let li = document.createElement("li");
+                    li.textContent = item;
+                    inventoryElement.appendChild(li);
+                });
+            }
+        }
+
+        function updateMap() {
+            let mapGrid = document.getElementById("map-grid");
+            mapGrid.innerHTML = "";
+
+            gameRooms.forEach(row => {
+                row.forEach(room => {
+                    let div = document.createElement("div");
+                    div.classList.add("room");
+                    div.textContent = room;
+                    if (room === playerLocation) {
+                        div.classList.add("player-location");
+                    }
+                    if (room === "") {
+                        div.style.visibility = "hidden"; // Hide empty spaces
+                    }
+                    mapGrid.appendChild(div);
+                });
+            });
+        }
+
+        updateMap();
+    </script>
+
+</body>
+</html>
